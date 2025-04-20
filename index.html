@@ -1,0 +1,205 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Horizontal Bar Calendar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #e0e0e0;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px; /* Adjust the gap to create margin between the day boxes */
+      border: 1px solid #ccc;
+    }
+
+    .day {
+      height: 90px;
+      border: 1px solid #ddd;
+      position: relative;
+      overflow: hidden;
+      background-color: #fff; /* Ensure background is white for the day boxes */
+    }
+
+    .date-number {
+      position: absolute;
+      top: 5px;
+      left: 7px;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    .center-content {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 3;
+    }
+
+    .day.empty {
+      background: #f0f0f0;
+      border: none;
+    }
+
+    .past {
+      background-color: #ffcccc !important; /* Light red */
+    }
+
+    .future {
+      background-color: #ccffcc !important; /* Light green */
+    }
+
+    .past .center-content {
+      color: #e53935;
+      font-size: 28px;
+    }
+
+    .progress-box {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .progress-passed {
+      background-color: #ffcccc;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .progress-remaining {
+      background-color: #ccffcc;
+      width: 100%;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+    }
+
+    /* Add black margins between the day boxes */
+    .calendar > div {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+
+<h1 id="monthTitle">Calendar</h1>
+<div class="weekdays">
+  <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+</div>
+<div class="calendar" id="calendar"></div>
+
+<script>
+function renderCalendar() {
+  const calendar = document.getElementById("calendar");
+  const monthTitle = document.getElementById("monthTitle");
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDayIndex = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = lastDay.getDate();
+
+  calendar.innerHTML = "";
+  monthTitle.textContent = firstDay.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  for (let i = 0; i < startDayIndex; i++) {
+    const empty = document.createElement("div");
+    empty.className = "day empty";
+    calendar.appendChild(empty);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cell = document.createElement("div");
+    cell.className = "day";
+
+    const number = document.createElement("div");
+    number.className = "date-number";
+    number.textContent = day;
+    cell.appendChild(number);
+
+    const center = document.createElement("div");
+    center.className = "center-content";
+
+    const thisDate = new Date(year, month, day);
+
+    if (day < today) {
+      cell.classList.add("past");
+      center.textContent = "❌";
+    } else if (day > today) {
+      cell.classList.add("future");
+    }
+
+    if (
+      day === today &&
+      thisDate.getMonth() === now.getMonth() &&
+      thisDate.getFullYear() === now.getFullYear()
+    ) {
+      // Calculate the minutes since 6 AM to current time
+      const startOfDay = new Date(year, month, day, 6, 0, 0); // 6 AM
+      const endOfDay = new Date(year, month, day, 23, 59, 59); // 12 AM
+      const totalMinutes = (endOfDay - startOfDay) / (1000 * 60); // 18 hours in minutes
+
+      // Get the current time
+      const minutesSince6AM = (now - startOfDay) / (1000 * 60);
+      const passed = (minutesSince6AM / totalMinutes) * 100;
+      const remaining = 100 - passed;
+
+      center.textContent = `${remaining.toFixed(1)}%`;
+
+      const progressBox = document.createElement("div");
+      progressBox.className = "progress-box";
+
+      const red = document.createElement("div");
+      red.className = "progress-passed";
+      red.style.height = `${passed}%`;
+
+      const green = document.createElement("div");
+      green.className = "progress-remaining";
+      green.style.height = `${remaining}%`;
+
+      progressBox.appendChild(red);
+      progressBox.appendChild(green);
+      cell.appendChild(progressBox);
+    }
+
+    cell.appendChild(center);
+    calendar.appendChild(cell);
+  }
+}
+
+renderCalendar();
+setInterval(renderCalendar, 60000); // Refresh every minute
+</script>
+
+</body>
+</html>
